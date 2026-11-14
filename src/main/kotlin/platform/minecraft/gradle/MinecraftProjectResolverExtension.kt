@@ -22,10 +22,12 @@ package com.demonwav.mcdev.platform.minecraft.gradle
 
 import com.demonwav.mcdev.platform.minecraft.gradle.datahandler.MinecraftModelFG2Handler
 import com.demonwav.mcdev.platform.minecraft.gradle.datahandler.MinecraftModelFG3Handler
+import com.demonwav.mcdev.platform.minecraft.gradle.datahandler.MinecraftModelMDGHandler
 import com.demonwav.mcdev.platform.minecraft.gradle.datahandler.MinecraftModelNG7Handler
 import com.demonwav.mcdev.platform.minecraft.gradle.datahandler.MinecraftModelNMDHandler
 import com.demonwav.mcdev.platform.minecraft.gradle.tooling.MinecraftModelFG2
 import com.demonwav.mcdev.platform.minecraft.gradle.tooling.MinecraftModelFG3
+import com.demonwav.mcdev.platform.minecraft.gradle.tooling.MinecraftModelMDG
 import com.demonwav.mcdev.platform.minecraft.gradle.tooling.MinecraftModelNG7
 import com.demonwav.mcdev.platform.minecraft.gradle.tooling.MinecraftModelNMD
 import com.demonwav.mcdev.util.runGradleTask
@@ -39,8 +41,13 @@ import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExten
 class MinecraftProjectResolverExtension : AbstractProjectResolverExtension() {
 
     // Register our custom Gradle tooling API model in IntelliJ's project resolver
-    override fun getExtraProjectModelClasses(): Set<Class<out Any>> =
-        setOf(MinecraftModelFG2::class.java, MinecraftModelFG3::class.java, MinecraftModelNG7::class.java, MinecraftModelNMD::class.java)
+    override fun getExtraProjectModelClasses(): Set<Class<out Any>> = setOf(
+        MinecraftModelFG2::class.java,
+        MinecraftModelFG3::class.java,
+        MinecraftModelMDG::class.java,
+        MinecraftModelNG7::class.java,
+        MinecraftModelNMD::class.java,
+    )
 
     override fun getToolingExtensionsClasses() = extraProjectModelClasses
 
@@ -93,6 +100,12 @@ class MinecraftProjectResolverExtension : AbstractProjectResolverExtension() {
     }
 
     private object Const {
-        val handlers = listOf(MinecraftModelFG2Handler, MinecraftModelFG3Handler, MinecraftModelNG7Handler, MinecraftModelNMDHandler)
+        val handlers = listOf(
+            MinecraftModelFG2Handler,
+            MinecraftModelFG3Handler,
+            MinecraftModelMDGHandler,
+            MinecraftModelNG7Handler,
+            MinecraftModelNMDHandler,
+        )
     }
 }
