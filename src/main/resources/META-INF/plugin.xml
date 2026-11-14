@@ -580,11 +580,11 @@
         <colorSettingsPage implementation="com.demonwav.mcdev.platform.minecraft.at.AtColorSettingsPage"/>
         <lang.commenter language="Access Transformers"
                         implementationClass="com.demonwav.mcdev.platform.minecraft.at.AtCommenter"/>
+        <lang.elementManipulator forClass="com.demonwav.mcdev.platform.minecraft.at.gen.psi.AtClassName"
+                                 implementationClass="com.demonwav.mcdev.platform.minecraft.at.psi.AtClassNameManipulator"/>
         <typedHandler implementation="com.demonwav.mcdev.platform.minecraft.at.completion.AtTypedHandlerDelegate"/>
         <completion.contributor language="Access Transformers"
                                 implementationClass="com.demonwav.mcdev.platform.minecraft.at.completion.AtCompletionContributor"/>
-        <gotoDeclarationHandler implementation="com.demonwav.mcdev.platform.minecraft.at.AtGotoDeclarationHandler"/>
-        <annotator language="Access Transformers" implementationClass="com.demonwav.mcdev.platform.minecraft.at.AtAnnotator"/>
 
         <!-- class tweaker file type -->
         <fileType name="Class Tweaker" language="Class Tweaker"

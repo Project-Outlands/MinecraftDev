@@ -3,7 +3,7 @@
  *
  * https://mcdev.io/
  *
- * Copyright (C) 2025 minecraft-dev
+ * Copyright (C) 2026 minecraft-dev
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
@@ -21,16 +21,20 @@
 package com.demonwav.mcdev.platform.minecraft.at.psi.mixins.impl
 
 import com.demonwav.mcdev.platform.minecraft.at.AtElementFactory
-import com.demonwav.mcdev.platform.minecraft.at.psi.getClassFromString
+import com.demonwav.mcdev.platform.minecraft.at.AtSymbolReference
+import com.demonwav.mcdev.platform.minecraft.at.AtSymbolResolver
 import com.demonwav.mcdev.platform.minecraft.at.psi.mixins.AtReturnValueMixin
 import com.intellij.extapi.psi.ASTWrapperPsiElement
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiReference
 
 abstract class AtReturnValueImplMixin(node: ASTNode) : ASTWrapperPsiElement(node), AtReturnValueMixin {
 
     override val returnValueClass: PsiClass?
-        get() = getClassFromString(returnValueText, project)
+        get() = AtSymbolResolver.resolve(this) as? PsiClass
+
+    override fun getReference(): PsiReference = AtSymbolReference(this)
 
     override val returnValueText: String
         get() = primitive?.text ?: classValue!!.text

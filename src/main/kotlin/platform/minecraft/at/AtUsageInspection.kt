@@ -20,19 +20,15 @@
 
 package com.demonwav.mcdev.platform.minecraft.at
 
-import com.demonwav.mcdev.facet.MinecraftFacet
-import com.demonwav.mcdev.platform.minecraft.MinecraftModuleType
 import com.demonwav.mcdev.platform.minecraft.at.gen.psi.AtEntry
-import com.demonwav.mcdev.platform.minecraft.at.gen.psi.AtFieldName
-import com.demonwav.mcdev.platform.minecraft.at.gen.psi.AtFunction
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
+import com.intellij.util.Processor
 
 class AtUsageInspection : LocalInspectionTool() {
 
@@ -43,33 +39,18 @@ class AtUsageInspection : LocalInspectionTool() {
                     return
                 }
 
-                val module = ModuleUtilCore.findModuleForPsiElement(element) ?: return
-                val instance = MinecraftFacet.getInstance(module) ?: return
-                val minecraftModule = instance.getModuleOfType(MinecraftModuleType) ?: return
-                val srgMap = minecraftModule.mappingsManager?.mappingsNow ?: return
-
-                val member = element.function ?: element.fieldName ?: return
-                val reference = AtMemberReference.get(element, member) ?: return
-
-                val psi = when (member) {
-                    is AtFunction ->
-                        reference.resolveMember(element.project) ?: srgMap.tryGetMappedMethod(reference)?.resolveMember(
-                            element.project,
-                        ) ?: return
-                    is AtFieldName ->
-                        reference.resolveMember(element.project)
-                            ?: srgMap.tryGetMappedField(reference)?.resolveMember(element.project) ?: return
-                    else ->
-                        return
-                }
+                val source = element.function?.funcName ?: element.fieldName ?: return
+                val psi = AtSymbolResolver.resolve(source) ?: return
 
                 val query = ReferencesSearch.search(psi, GlobalSearchScope.projectScope(element.project))
-                query.findFirst()
-                    ?: holder.registerProblem(
+                val hasNonAtUsage = !query.forEach(Processor { it.element.containingFile is AtFile })
+                if (!hasNonAtUsage) {
+                    holder.registerProblem(
                         element,
                         "Access Transformer entry is never used",
                         ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                     )
+                }
             }
         }
     }

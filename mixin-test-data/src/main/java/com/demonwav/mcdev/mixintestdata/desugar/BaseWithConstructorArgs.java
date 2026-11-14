@@ -3,7 +3,7 @@
  *
  * https://mcdev.io/
  *
- * Copyright (C) 2025 minecraft-dev
+ * Copyright (C) 2026 minecraft-dev
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
@@ -12,22 +12,16 @@
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.demonwav.mcdev.platform.minecraft.at.completion
+package com.demonwav.mcdev.mixintestdata.desugar;
 
-import com.intellij.codeInsight.completion.PrefixMatcher
-import com.intellij.codeInsight.lookup.LookupElement
+public class BaseWithConstructorArgs {
 
-class SrgPrefixMatcher(prefix: String) : PrefixMatcher(prefix) {
-    override fun prefixMatches(name: String) = true
-    override fun cloneWithPrefix(prefix: String) = SrgPrefixMatcher(prefix)
-
-    override fun prefixMatches(element: LookupElement): Boolean {
-        return element.lookupString.contains(myPrefix, ignoreCase = true)
+    public BaseWithConstructorArgs(String stringArg, int intArg) {
     }
 }
