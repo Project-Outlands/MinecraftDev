@@ -7,3 +7,4 @@ com.demonwav.mcdev.platform.minecraft.gradle.tooling.unimined.UniminedModelBuild
 com.demonwav.mcdev.platform.minecraft.gradle.tooling.vanillagradle.VanillaGradleModelBuilderImpl
 com.demonwav.mcdev.platform.minecraft.gradle.tooling.MinecraftModelFG2BuilderImpl
 com.demonwav.mcdev.platform.minecraft.gradle.tooling.MinecraftModelFG3BuilderImpl
+com.demonwav.mcdev.platform.minecraft.gradle.tooling.MinecraftModelRFGBuilderImpl

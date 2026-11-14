@@ -25,11 +25,13 @@ import com.demonwav.mcdev.platform.minecraft.gradle.datahandler.MinecraftModelFG
 import com.demonwav.mcdev.platform.minecraft.gradle.datahandler.MinecraftModelMDGHandler
 import com.demonwav.mcdev.platform.minecraft.gradle.datahandler.MinecraftModelNG7Handler
 import com.demonwav.mcdev.platform.minecraft.gradle.datahandler.MinecraftModelNMDHandler
+import com.demonwav.mcdev.platform.minecraft.gradle.datahandler.MinecraftModelRFGHandler
 import com.demonwav.mcdev.platform.minecraft.gradle.tooling.MinecraftModelFG2
 import com.demonwav.mcdev.platform.minecraft.gradle.tooling.MinecraftModelFG3
 import com.demonwav.mcdev.platform.minecraft.gradle.tooling.MinecraftModelMDG
 import com.demonwav.mcdev.platform.minecraft.gradle.tooling.MinecraftModelNG7
 import com.demonwav.mcdev.platform.minecraft.gradle.tooling.MinecraftModelNMD
+import com.demonwav.mcdev.platform.minecraft.gradle.tooling.MinecraftModelRFG
 import com.demonwav.mcdev.util.runGradleTask
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ModuleData
@@ -47,6 +49,7 @@ class MinecraftProjectResolverExtension : AbstractProjectResolverExtension() {
         MinecraftModelMDG::class.java,
         MinecraftModelNG7::class.java,
         MinecraftModelNMD::class.java,
+        MinecraftModelRFG::class.java,
     )
 
     override fun getToolingExtensionsClasses() = extraProjectModelClasses
@@ -106,6 +109,7 @@ class MinecraftProjectResolverExtension : AbstractProjectResolverExtension() {
             MinecraftModelMDGHandler,
             MinecraftModelNG7Handler,
             MinecraftModelNMDHandler,
+            MinecraftModelRFGHandler,
         )
     }
 }
