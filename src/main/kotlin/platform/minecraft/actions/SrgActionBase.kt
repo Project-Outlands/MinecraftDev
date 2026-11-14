@@ -20,6 +20,7 @@
 
 package com.demonwav.mcdev.platform.minecraft.actions
 
+import com.demonwav.mcdev.platform.minecraft.MinecraftModule
 import com.demonwav.mcdev.platform.minecraft.MinecraftModuleType
 import com.demonwav.mcdev.platform.minecraft.mappings.Mappings
 import com.demonwav.mcdev.platform.mixin.handlers.ShadowHandler
@@ -44,6 +45,10 @@ abstract class SrgActionBase : AnAction() {
         }
 
         val minecraftModule = data.instance.getModuleOfType(MinecraftModuleType)
+
+        if (!requiresSrgMappings(minecraftModule)) {
+            return performWithMappings(e, data, data.element, null)
+        }
 
         val mappingsManager = minecraftModule?.mappingsManager ?: return performWithMappings(e, data, data.element, null)
         mappingsManager.mappings.onSuccess { srgMap ->
@@ -74,6 +79,8 @@ abstract class SrgActionBase : AnAction() {
 
         withSrgTarget(parent, srgMap, e, data)
     }
+
+    protected open fun requiresSrgMappings(minecraftModule: MinecraftModule?) = true
 
     abstract fun withSrgTarget(parent: PsiElement, srgMap: Mappings?, e: AnActionEvent, data: ActionData)
 }

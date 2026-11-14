@@ -1500,6 +1500,8 @@
         <projectResolve implementation="com.demonwav.mcdev.platform.minecraft.fabricloom.FabricLoomProjectResolverExtension"/>
         <projectResolve
             implementation="com.demonwav.mcdev.platform.architectury.framework.ArchitecturyProjectResolverExtension"/>
+        <projectResolve
+            implementation="com.demonwav.mcdev.platform.minecraft.unimined.UniminedProjectResolverExtension"/>
     </extensions>
 
     <applicationListeners>

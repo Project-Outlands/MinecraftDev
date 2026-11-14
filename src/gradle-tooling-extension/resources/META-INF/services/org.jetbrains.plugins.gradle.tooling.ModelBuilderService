@@ -3,6 +3,7 @@ com.demonwav.mcdev.platform.minecraft.gradle.tooling.fabricloom.FabricLoomModelB
 com.demonwav.mcdev.platform.minecraft.gradle.tooling.mcpforge.McpModDevForgeModelBuilderImpl
 com.demonwav.mcdev.platform.minecraft.gradle.tooling.neogradle.NeoGradle7ModelBuilderImpl
 com.demonwav.mcdev.platform.minecraft.gradle.tooling.neomoddev.NeoModDevGradleModelBuilderImpl
+com.demonwav.mcdev.platform.minecraft.gradle.tooling.unimined.UniminedModelBuilderImpl
 com.demonwav.mcdev.platform.minecraft.gradle.tooling.vanillagradle.VanillaGradleModelBuilderImpl
 com.demonwav.mcdev.platform.minecraft.gradle.tooling.MinecraftModelFG2BuilderImpl
 com.demonwav.mcdev.platform.minecraft.gradle.tooling.MinecraftModelFG3BuilderImpl
