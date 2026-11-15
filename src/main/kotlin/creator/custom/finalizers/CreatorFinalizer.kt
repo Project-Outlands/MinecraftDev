@@ -56,7 +56,7 @@ interface CreatorFinalizer {
 
     companion object {
         private val EP_NAME =
-            ExtensionPointName.create<CreatorFinalizerBean>("com.demonwav.minecraft-dev.creatorFinalizer")
+            ExtensionPointName.create<CreatorFinalizerBean>("top.outlands.minecraft-dev.creatorFinalizer")
         private val COLLECTOR = KeyedExtensionCollector<CreatorFinalizer, String>(EP_NAME)
 
         fun validateAll(

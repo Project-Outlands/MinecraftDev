@@ -39,6 +39,6 @@ interface ShadowTargetResolver {
     fun findCompletionTargets(mixinClass: PsiClass): Sequence<MixinTargetMember> = emptySequence()
 
     companion object {
-        val EP_NAME = ExtensionPointName.create<ShadowTargetResolver>("com.demonwav.minecraft-dev.shadowTargetResolver")
+        val EP_NAME = ExtensionPointName.create<ShadowTargetResolver>("top.outlands.minecraft-dev.shadowTargetResolver")
     }
 }

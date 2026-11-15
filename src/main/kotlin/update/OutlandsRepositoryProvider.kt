@@ -3,7 +3,7 @@
  *
  * https://mcdev.io/
  *
- * Copyright (C) 2025 minecraft-dev
+ * Copyright (C) 2026 minecraft-dev
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
@@ -20,13 +20,18 @@
 
 package com.demonwav.mcdev.update
 
-import com.intellij.openapi.updateSettings.impl.UpdateSettings
+import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.updateSettings.impl.UpdateSettingsProvider
 
-enum class Channels(val title: String, val url: String) {
-    NIGHTLY("Nightly", "https://plugins.jetbrains.com/plugins/Nightly/8327"),
-    ;
+class OutlandsRepositoryProvider : UpdateSettingsProvider {
+    override fun getPluginRepositories(): List<String> = listOf(repositoryUrl())
 
-    fun hasChannel(): Boolean {
-        return UpdateSettings.getInstance().storedPluginHosts.contains(url)
+    companion object {
+        const val REPOSITORY_URL = "https://maven.outlands.top/releases/top/outlands/minecraft-dev"
+
+        fun repositoryUrl(): String {
+            val baseline = ApplicationInfo.getInstance().build.baselineVersion
+            return "$REPOSITORY_URL/updatePlugins-$baseline.xml"
+        }
     }
 }

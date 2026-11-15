@@ -24,12 +24,10 @@ import com.intellij.codeInsight.generation.ClassMember
 import com.intellij.codeInsight.generation.GenerateMembersHandlerBase
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.psi.PsiClass
 import java.lang.reflect.Field
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
-import java.nio.file.Path
 
 /**
  * All reflective access to IntelliJ internals goes through this object, so that the existence of every member can be
@@ -62,10 +60,6 @@ object McdevReflection {
             PsiClass::class.java,
             Array<ClassMember>::class.java,
         )
-
-    @JvmStatic
-    val FIELD_PLUGIN_DOWNLOADER_MY_FILE: Field =
-        PluginDownloader::class.java.getDeclaredFieldEx("myFile", Path::class.java)
 
     /**
      * Like [Class.getDeclaredField], but makes the field accessible and checks that it has the expected [type].

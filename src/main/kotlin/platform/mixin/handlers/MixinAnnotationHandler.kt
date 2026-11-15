@@ -3,7 +3,7 @@
  *
  * https://mcdev.io/
  *
- * Copyright (C) 2025 minecraft-dev
+ * Copyright (C) 2026 minecraft-dev
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
@@ -82,7 +82,7 @@ interface MixinAnnotationHandler {
 
     companion object {
         private val EP_NAME = ExtensionPointName<KeyedLazyInstance<MixinAnnotationHandler>>(
-            "com.demonwav.minecraft-dev.mixinAnnotationHandler",
+            "top.outlands.minecraft-dev.mixinAnnotationHandler",
         )
         private val COLLECTOR = KeyedExtensionCollector<MixinAnnotationHandler, String>(EP_NAME)
 

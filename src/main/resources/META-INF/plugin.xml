@@ -35,7 +35,7 @@
     <depends optional="true" config-file="mcdev-toml.xml">org.toml.lang</depends>
     <depends optional="true" config-file="mcdev-yaml.xml">org.jetbrains.plugins.yaml</depends>
 
-    <id>com.demonwav.minecraft-dev</id>
+    <id>top.outlands.minecraft-dev</id>
     <name>Minecraft Development</name>
     <vendor email="kyle@denwav.dev" url="https://mcdev.io/">minecraft-dev</vendor>
 
@@ -105,7 +105,7 @@
         </extensionPoint>
     </extensionPoints>
 
-    <extensions defaultExtensionNs="com.demonwav.minecraft-dev">
+    <extensions defaultExtensionNs="top.outlands.minecraft-dev">
         <creatorPropertyType
             implementation="com.demonwav.mcdev.creator.custom.types.ArchitecturyVersionsCreatorProperty$Factory"
             type="architectury_versions"/>
@@ -289,6 +289,7 @@
         <notificationGroup id="Minecraft project creator" key="notification.group.minecraft_project_creator" displayType="STICKY_BALLOON"/>
         <notificationGroup id="Minecraft facet" key="notification.group.minecraft_facet" displayType="STICKY_BALLOON"/>
         <postStartupActivity implementation="com.demonwav.mcdev.update.OutdatedIdeChecker"/>
+        <updateSettingsProvider implementation="com.demonwav.mcdev.update.OutlandsRepositoryProvider"/>
         <notificationGroup id="Minecraft Development updates" key="notification.group.minecraft_development_updates" displayType="STICKY_BALLOON"/>
 
         <!-- File templates are for project creations -->
@@ -1520,12 +1521,6 @@
             <add-to-group group-id="GenerateGroup" anchor="last"/>
         </action>
 
-        <group id="MinecraftDevToolsGroup" popup="true">
-            <add-to-group group-id="ToolsMenu"/>
-        </group>
-        <action class="com.demonwav.mcdev.update.ConfigurePluginUpdatesAction" id="MinecraftDevConfigureUpdates">
-            <add-to-group group-id="MinecraftDevToolsGroup"/>
-        </action>
         <action class="com.demonwav.mcdev.platform.mixin.action.FindMixinsAction" id="FindMixinsAction">
             <add-to-group relative-to-action="EditorPopupMenu2" anchor="after" group-id="EditorPopupMenu"/>
         </action>

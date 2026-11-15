@@ -33,7 +33,7 @@ plugins {
     alias(libs.plugins.idea.ext)
     `mcdev-core`
     `mcdev-parsing`
-    `mcdev-publishing`
+    `outlands-release`
     alias(libs.plugins.sentry) apply (System.getenv("CI") == "true" && System.getenv("NO_SENTRY") != "true")
 }
 
@@ -44,7 +44,7 @@ val testLibs: Configuration by configurations.creating {
     isTransitive = false
 }
 
-group = "com.demonwav.mcdev"
+group = "top.outlands"
 
 val gradleToolingExtensionSourceSet: SourceSet = sourceSets.create("gradle-tooling-extension", Action<SourceSet> {
     configurations.named(compileOnlyConfigurationName) {
@@ -166,7 +166,7 @@ intellijPlatform {
 
     pluginVerification {
         ides {
-            recommended()
+            local(intellijPlatform.platformPath.toFile())
         }
     }
 }
@@ -174,6 +174,7 @@ intellijPlatform {
 tasks.patchPluginXml {
     val changelog = project.changelog
     changeNotes = changelog.render(Changelog.OutputType.HTML)
+    untilBuild = sinceBuild.map { "${it.substringBefore('.')}.*" }
 }
 
 // Compile classes to be loaded into the Gradle VM to Java 8

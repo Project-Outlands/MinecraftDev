@@ -26,7 +26,7 @@ import com.intellij.util.ThreeState
 
 interface MissingLVTChecker {
     companion object {
-        val EP_NAME = ExtensionPointName.create<MissingLVTChecker>("com.demonwav.minecraft-dev.missingLVTChecker")
+        val EP_NAME = ExtensionPointName.create<MissingLVTChecker>("top.outlands.minecraft-dev.missingLVTChecker")
     }
 
     /**

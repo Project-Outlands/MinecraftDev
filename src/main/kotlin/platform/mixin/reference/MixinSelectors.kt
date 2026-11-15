@@ -88,7 +88,7 @@ interface MixinSelectorParser {
     fun parse(value: String, context: PsiElement): MixinSelector?
 
     companion object {
-        val EP_NAME = ExtensionPointName.create<MixinSelectorParser>("com.demonwav.minecraft-dev.mixinSelectorParser")
+        val EP_NAME = ExtensionPointName.create<MixinSelectorParser>("top.outlands.minecraft-dev.mixinSelectorParser")
     }
 }
 

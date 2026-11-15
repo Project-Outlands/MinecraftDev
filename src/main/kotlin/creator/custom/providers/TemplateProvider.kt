@@ -68,7 +68,7 @@ interface TemplateProvider {
     companion object {
 
         private val EP_NAME =
-            ExtensionPointName<TemplateProviderBean>("com.demonwav.minecraft-dev.creatorTemplateProvider")
+            ExtensionPointName<TemplateProviderBean>("top.outlands.minecraft-dev.creatorTemplateProvider")
         private val COLLECTOR = KeyedExtensionCollector<TemplateProvider, String>(EP_NAME)
 
         fun get(key: String): TemplateProvider? = COLLECTOR.findSingle(key)

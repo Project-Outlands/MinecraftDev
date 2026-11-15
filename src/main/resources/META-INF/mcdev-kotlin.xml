@@ -19,7 +19,7 @@
 -->
 
 <idea-plugin>
-    <extensions defaultExtensionNs="com.demonwav.minecraft-dev">
+    <extensions defaultExtensionNs="top.outlands.minecraft-dev">
         <eventGenHelper language="kotlin" implementationClass="com.demonwav.mcdev.insight.generation.KotlinEventGenHelper"/>
     </extensions>
 

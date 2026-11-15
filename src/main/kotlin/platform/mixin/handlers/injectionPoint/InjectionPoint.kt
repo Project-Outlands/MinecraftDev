@@ -69,7 +69,7 @@ import org.objectweb.asm.tree.MethodNode
 abstract class InjectionPoint<T : PsiElement> {
     companion object {
         private val COLLECTOR =
-            KeyedExtensionCollector<InjectionPoint<*>, String>("com.demonwav.minecraft-dev.injectionPoint")
+            KeyedExtensionCollector<InjectionPoint<*>, String>("top.outlands.minecraft-dev.injectionPoint")
 
         fun byAtCode(atCode: String): InjectionPoint<*>? {
             return COLLECTOR.findSingle(atCode)

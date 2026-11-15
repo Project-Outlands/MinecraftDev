@@ -6,6 +6,19 @@ on:
     branches: ['*']
 
 jobs:
+  release-tooling:
+    name: Validate release tooling
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Exercise release planning and publication recovery
+        run: python -B -m unittest discover -s .github/tests -p 'test_*.py' -v
+      - name: Check workflow syntax
+        run: go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.12 .github/workflows/release.yml
+
   build:
     name: Build
     strategy:
@@ -17,19 +30,19 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
       - name: Setup Java
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: 'temurin'
           java-version: 21
-      - uses: actions-ecosystem/action-regex-match@d50fd2e7a37d0e617aea3d7ada663bd56862b9cc
+      - uses: actions-ecosystem/action-regex-match@v2
         id: branch-match
         with:
           text: ${{ github.ref }}
           regex: '^refs\/heads\/\d{4}\.\d$'
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@v6
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/dev' && steps.branch-match.outputs.match == '' }}
       - shell: bash
@@ -42,7 +55,7 @@ jobs:
           NO_SENTRY: "true"
       - name: Upload test reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-reports-${{ matrix.os }}
           path: build/reports

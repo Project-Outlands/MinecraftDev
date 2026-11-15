@@ -24,7 +24,6 @@ import com.demonwav.mcdev.asset.MCDevBundle
 import com.demonwav.mcdev.asset.PlatformAssets
 import com.demonwav.mcdev.creator.custom.mavenRepoTable
 import com.demonwav.mcdev.creator.custom.templateRepoTable
-import com.demonwav.mcdev.update.ConfigurePluginUpdatesDialog
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.ProjectManager
@@ -59,11 +58,7 @@ class MinecraftConfigurable : Configurable {
             ).apply {
                 font = font.deriveFont(Font.BOLD, font.size * 1.5f)
             }
-        ) {
-            button(MCDevBundle("minecraft.settings.change_update_channel")) {
-                ConfigurePluginUpdatesDialog().show()
-            }.align(AlignX.RIGHT)
-        }.bottomGap(BottomGap.MEDIUM)
+        ) {}
 
         val settings = MinecraftSettings.instance
 

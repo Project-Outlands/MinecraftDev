@@ -53,7 +53,7 @@ interface EventGenHelper {
     companion object {
 
         val EP_NAME = ExtensionPointName.create<LanguageExtensionPoint<EventGenHelper>>(
-            "com.demonwav.minecraft-dev.eventGenHelper"
+            "top.outlands.minecraft-dev.eventGenHelper"
         )
         val COLLECTOR = LanguageExtension(EP_NAME, JvmEventGenHelper())
     }

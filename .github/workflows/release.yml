@@ -1,0 +1,252 @@
+name: Publish Plugin
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Core version committed on dev (for example 1.9.1)
+        required: true
+        type: string
+      dry_run:
+        description: Build and verify only; do not write to Maven or GitHub
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: outlands-release
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Plan forward merges
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+      version: ${{ steps.plan.outputs.version }}
+      source: ${{ steps.plan.outputs.source }}
+      tag: ${{ steps.plan.outputs.tag }}
+      dry_run: ${{ steps.plan.outputs.dry_run }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Prepare immutable source plan
+        id: plan
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          if [[ "$GITHUB_EVENT_NAME" == push ]]; then
+            [[ "$GITHUB_REF_TYPE" == tag ]]
+            version="${GITHUB_REF_NAME#v}"
+            dry_run=false
+          else
+            version="$INPUT_VERSION"
+            dry_run="$INPUT_DRY_RUN"
+          fi
+          python3 .github/scripts/release.py prepare --version "$version" --dry-run "$dry_run"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release-plan
+          path: release-plan/
+          if-no-files-found: error
+          retention-days: 30
+
+  build:
+    name: Build IDEA ${{ matrix.branch }}
+    needs: prepare
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+    env:
+      NO_SENTRY: 'true'
+      BRANCH: ${{ matrix.branch }}
+      VERSION: ${{ needs.prepare.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.prepare.outputs.source }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-plan
+          path: release-plan
+      - name: Restore the exact planned commit
+        run: python3 .github/scripts/release.py restore --branch "$BRANCH"
+      - name: Set up bootstrap JDK
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '25'
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: true
+      - name: Read the branch's actual build configuration
+        id: metadata
+        run: |
+          ./gradlew -Dorg.gradle.jvmargs=-Xmx4G :writeReleaseMetadata --stacktrace
+          python3 .github/scripts/release.py metadata --branch "$BRANCH" --version "$VERSION"
+      - name: Set up the branch's toolchain
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: ${{ steps.metadata.outputs.jdk }}
+      - name: Build, test and verify this IDE line
+        run: |
+          ./gradlew -Dorg.gradle.jvmargs=-Xmx4G :build :verifyPlugin :verifyPluginStructure \
+            :verifyReleaseMetadata :generatePomFileForPluginZipPublication \
+            -Poutlands.releaseBranch="$BRANCH" -Poutlands.releaseVersion="$VERSION" --stacktrace
+      - name: Package the verified ZIP and Maven POM
+        run: python3 .github/scripts/release.py package --branch "$BRANCH" --packages release-packages
+      - uses: actions/upload-artifact@v7
+        with:
+          name: plugin-${{ matrix.branch }}
+          path: release-packages/
+          if-no-files-found: error
+          retention-days: 30
+      - name: Retain verification reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: reports-${{ matrix.branch }}
+          path: build/reports/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  assemble:
+    name: Verify all release assets
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.prepare.outputs.source }}
+          persist-credentials: false
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-plan
+          path: release-plan
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: plugin-*
+          path: release-packages
+          merge-multiple: true
+      - name: Verify every planned IDE package and create the shared manifest
+        run: python3 .github/scripts/release.py aggregate
+      - uses: actions/upload-artifact@v7
+        with:
+          name: github-release-assets
+          path: release-assets/
+          if-no-files-found: error
+          retention-days: 30
+
+  authorize:
+    name: Check production credentials
+    if: needs.prepare.outputs.dry_run == 'false'
+    needs: [prepare, assemble]
+    runs-on: ubuntu-latest
+    environment: maven
+    steps:
+      - name: Require credentials before any publication
+        env:
+          MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
+        run: |
+          [[ -n "$MAVEN_USERNAME" && -n "$MAVEN_PASSWORD" ]] || {
+            echo 'Configure MAVEN_USERNAME and MAVEN_PASSWORD in the maven environment.' >&2
+            exit 1
+          }
+
+  publish:
+    name: Publish IDEA ${{ matrix.branch }} to Maven
+    if: needs.prepare.outputs.dry_run == 'false'
+    needs: [prepare, assemble, authorize]
+    runs-on: ubuntu-latest
+    environment: maven
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.prepare.outputs.source }}
+          persist-credentials: false
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-plan
+          path: release-plan
+      - uses: actions/download-artifact@v8
+        with:
+          name: plugin-${{ matrix.branch }}
+          path: release-packages
+      - name: Upload immutable Maven artifacts and verify anonymous downloads
+        env:
+          BRANCH: ${{ matrix.branch }}
+          MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
+        run: python3 .github/scripts/release.py publish --branch "$BRANCH"
+
+  release:
+    name: Publish one GitHub Release for all IDEs
+    if: needs.prepare.outputs.dry_run == 'false'
+    needs: [prepare, publish]
+    runs-on: ubuntu-latest
+    environment: maven
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.prepare.outputs.source }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-plan
+          path: release-plan
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: plugin-*
+          path: release-packages
+          merge-multiple: true
+      - name: Recheck every release asset
+        run: python3 .github/scripts/release.py aggregate
+      - name: Promote Maven metadata and IDE update descriptors
+        env:
+          MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
+        run: python3 .github/scripts/release.py promote
+      - name: Create or resume the aggregate GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 .github/scripts/release.py release
+
+  finalize:
+    name: Record the released branch commits
+    if: needs.prepare.outputs.dry_run == 'false'
+    needs: [prepare, release]
+    runs-on: ubuntu-latest
+    environment: maven
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.prepare.outputs.source }}
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-plan
+          path: release-plan
+      - name: Atomically fast-forward branches and add per-IDE audit tags
+        run: python3 .github/scripts/release.py finalize

@@ -3,7 +3,7 @@
  *
  * https://mcdev.io/
  *
- * Copyright (C) 2025 minecraft-dev
+ * Copyright (C) 2026 minecraft-dev
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
@@ -35,7 +35,7 @@ interface CreatorPropertyFactory {
     companion object {
 
         private val EP_NAME = ExtensionPointName<KeyedLazyInstance<CreatorPropertyFactory>>(
-            "com.demonwav.minecraft-dev.creatorPropertyType"
+            "top.outlands.minecraft-dev.creatorPropertyType"
         )
 
         private val COLLECTOR = KeyedExtensionCollector<CreatorPropertyFactory, String>(EP_NAME)
