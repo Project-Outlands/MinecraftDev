@@ -522,7 +522,18 @@ class AtReferenceTest : BaseMinecraftTest(PlatformType.MINECRAFT) {
             TestModeFlags.runWithFlag(CompletionAutoPopupHandler.ourTestingAutopopup, true) {
                 val variants = fixture.completeBasic()
                 if (!variants.isNullOrEmpty()) {
-                    fixture.lookup.currentItem = variants.first { it.lookupString == "net.minecraft.Test" }
+                    val classVariant = variants.firstOrNull {
+                        (it.`object` as? PsiClass)?.qualifiedName == "net.minecraft.Test"
+                    } ?: variants.firstOrNull {
+                        "net.minecraft.Test" in it.allLookupStrings
+                    }
+                    assertNotNull(
+                        classVariant,
+                        "Completion variants: " + variants.joinToString {
+                            "\"${it.lookupString}\" -> ${it.allLookupStrings}"
+                        },
+                    )
+                    fixture.lookup.currentItem = classVariant!!
                     fixture.finishLookup(Lookup.REPLACE_SELECT_CHAR)
                 }
                 PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
