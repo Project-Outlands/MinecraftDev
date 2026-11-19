@@ -20,6 +20,7 @@
 
 package com.demonwav.mcdev.platform.mixin.inspection.injector
 
+import com.demonwav.mcdev.asset.MCDevBundle
 import com.demonwav.mcdev.platform.mixin.handlers.MixinAnnotationHandler
 import com.demonwav.mcdev.platform.mixin.handlers.injectionPoint.AtResolver
 import com.demonwav.mcdev.platform.mixin.inspection.MixinInspection
@@ -29,6 +30,7 @@ import com.demonwav.mcdev.platform.mixin.util.MixinConstants
 import com.demonwav.mcdev.util.constantValue
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.options.OptPane
 import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaElementVisitor
 import com.intellij.psi.JavaPsiFacade
@@ -37,6 +39,19 @@ import com.intellij.psi.PsiExpression
 import org.objectweb.asm.util.Printer
 
 class InjectorOpcodeInspection : MixinInspection() {
+    @JvmField
+    var reportIgnored = true
+    @JvmField
+    var reportInvalid = true
+    @JvmField
+    var reportMissing = true
+
+    override fun getOptionsPane() = OptPane.pane(
+        OptPane.checkbox("reportIgnored", MCDevBundle("inspection.missing_or_invalid_opcode.option.ignore")),
+        OptPane.checkbox("reportInvalid", MCDevBundle("inspection.missing_or_invalid_opcode.option.invalid")),
+        OptPane.checkbox("reportMissing", MCDevBundle("inspection.missing_or_invalid_opcode.option.missing"))
+    )
+
     override fun buildVisitor(holder: ProblemsHolder) = object : JavaElementVisitor() {
         override fun visitAnnotation(annotation: PsiAnnotation) {
             if (!annotation.hasQualifiedName(MixinConstants.Annotations.AT)) {
@@ -49,24 +64,26 @@ class InjectorOpcodeInspection : MixinInspection() {
             val opcode = opcodeAttribute?.constantValue as? Int
 
             if (validOpcodes.isEmpty()) {
-                if (opcode != null) {
+                if (opcode != null && reportIgnored) {
                     holder.registerProblem(
                         opcodeAttribute,
-                        "Opcode is ignored by this injection point",
+                        MCDevBundle("inspection.missing_or_invalid_opcode.ignored"),
                         AnnotationAttributeFix(annotation, "opcode" to null)
                     )
                 }
             } else {
                 if (opcode == null) {
-                    holder.registerProblem(
-                        annotation.nameReferenceElement ?: annotation,
-                        "Missing opcode",
-                        *listOfNotNull(makeSpecifyOpcodeFix(holder.project, annotation)).toTypedArray()
-                    )
-                } else if (opcode !in validOpcodes) {
+                    if (reportMissing) {
+                        holder.registerProblem(
+                            annotation.nameReferenceElement ?: annotation,
+                            MCDevBundle("inspection.missing_or_invalid_opcode.missing"),
+                            *listOfNotNull(makeSpecifyOpcodeFix(holder.project, annotation)).toTypedArray()
+                        )
+                    }
+                } else if (opcode !in validOpcodes && reportInvalid) {
                     holder.registerProblem(
                         opcodeAttribute,
-                        "Invalid opcode for this injection point"
+                        MCDevBundle("inspection.missing_or_invalid_opcode.invalid")
                     )
                 }
             }
@@ -101,7 +118,7 @@ class InjectorOpcodeInspection : MixinInspection() {
         at,
         "opcode" to opcodeValue
     ) {
-        override fun getFamilyName() = "Add opcode = Opcodes.$opcodeName"
-        override fun getText() = "Add opcode = Opcodes.$opcodeName"
+        override fun getFamilyName() = MCDevBundle("inspection.missing_or_invalid_opcode.fix", opcodeName)
+        override fun getText() = MCDevBundle("inspection.missing_or_invalid_opcode.fix", opcodeName)
     }
 }

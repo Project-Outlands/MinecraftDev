@@ -3,7 +3,7 @@
  *
  * https://mcdev.io/
  *
- * Copyright (C) 2025 minecraft-dev
+ * Copyright (C) 2026 minecraft-dev
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
@@ -20,6 +20,7 @@
 
 package com.demonwav.mcdev.platform.minecraft.actions
 
+import com.demonwav.mcdev.asset.MCDevBundle
 import com.demonwav.mcdev.platform.minecraft.MinecraftModule
 import com.demonwav.mcdev.platform.minecraft.MinecraftModuleSettings.AccessTransformerNamespace
 import com.demonwav.mcdev.platform.minecraft.mappings.Mappings
@@ -48,7 +49,7 @@ class CopyAtAction : SrgActionBase() {
                 is PsiField -> {
                     val className = parent.containingClass?.fullQualifiedName ?: return showBalloon(
                         e,
-                        "No containing class found"
+                        MCDevBundle("minecraft.actions.no_containing_class_found")
                     )
                     copyToClipboard(
                         data.editor,
@@ -60,7 +61,7 @@ class CopyAtAction : SrgActionBase() {
                 is PsiMethod -> {
                     val className = parent.containingClass?.fullQualifiedName ?: return showBalloon(
                         e,
-                        "No containing class found"
+                        MCDevBundle("minecraft.actions.no_containing_class_found")
                     )
                     copyToClipboard(
                         data.editor,
@@ -70,7 +71,10 @@ class CopyAtAction : SrgActionBase() {
                 }
 
                 is PsiClass -> {
-                    val className = parent.fullQualifiedName ?: return showBalloon(e, "Could not get FQN")
+                    val className = parent.fullQualifiedName ?: return showBalloon(
+                        e,
+                        MCDevBundle("minecraft.actions.could_not_get_fqn"),
+                    )
                     copyToClipboard(
                         data.editor,
                         data.element,
@@ -81,9 +85,18 @@ class CopyAtAction : SrgActionBase() {
         } else {
             when (parent) {
                 is PsiField -> {
-                    val containing = parent.containingClass ?: return showBalloon(e, "No SRG name found")
-                    val classSrg = srgMap.getIntermediaryClass(containing) ?: return showBalloon(e, "No SRG name found")
-                    val srg = srgMap.getIntermediaryField(parent) ?: return showBalloon(e, "No SRG name found")
+                    val containing = parent.containingClass ?: return showBalloon(
+                        e,
+                        MCDevBundle("minecraft.actions.no_srg_name"),
+                    )
+                    val classSrg = srgMap.getIntermediaryClass(containing) ?: return showBalloon(
+                        e,
+                        MCDevBundle("minecraft.actions.no_srg_name"),
+                    )
+                    val srg = srgMap.getIntermediaryField(parent) ?: return showBalloon(
+                        e,
+                        MCDevBundle("minecraft.actions.no_srg_name"),
+                    )
                     copyToClipboard(
                         data.editor,
                         data.element,
@@ -92,9 +105,18 @@ class CopyAtAction : SrgActionBase() {
                 }
 
                 is PsiMethod -> {
-                    val containing = parent.containingClass ?: return showBalloon(e, "No SRG name found")
-                    val classSrg = srgMap.getIntermediaryClass(containing) ?: return showBalloon(e, "No SRG name found")
-                    val srg = srgMap.getIntermediaryMethod(parent) ?: return showBalloon(e, "No SRG name found")
+                    val containing = parent.containingClass ?: return showBalloon(
+                        e,
+                        MCDevBundle("minecraft.actions.no_srg_name"),
+                    )
+                    val classSrg = srgMap.getIntermediaryClass(containing) ?: return showBalloon(
+                        e,
+                        MCDevBundle("minecraft.actions.no_srg_name"),
+                    )
+                    val srg = srgMap.getIntermediaryMethod(parent) ?: return showBalloon(
+                        e,
+                        MCDevBundle("minecraft.actions.no_srg_name"),
+                    )
                     copyToClipboard(
                         data.editor,
                         data.element,
@@ -104,11 +126,14 @@ class CopyAtAction : SrgActionBase() {
 
                 is PsiClass -> {
                     val classMcpToSrg =
-                        srgMap.getIntermediaryClass(parent) ?: return showBalloon(e, "No SRG name found")
+                        srgMap.getIntermediaryClass(parent) ?: return showBalloon(
+                            e,
+                            MCDevBundle("minecraft.actions.no_srg_name"),
+                        )
                     copyToClipboard(data.editor, data.element, classMcpToSrg)
                 }
 
-                else -> showBalloon(e, "Not a valid element")
+                else -> showBalloon(e, MCDevBundle("minecraft.actions.not_valid_element"))
             }
         }
     }
@@ -117,6 +142,6 @@ class CopyAtAction : SrgActionBase() {
         val stringSelection = StringSelection(text)
         val clpbrd = Toolkit.getDefaultToolkit().systemClipboard
         clpbrd.setContents(stringSelection, null)
-        showSuccessBalloon(editor, element, "Copied $text")
+        showSuccessBalloon(editor, element, MCDevBundle("minecraft.actions.copied", text))
     }
 }

@@ -20,6 +20,7 @@
 
 package com.demonwav.mcdev.creator.custom.types
 
+import com.demonwav.mcdev.asset.MCDevBundle
 import com.demonwav.mcdev.creator.collectMavenVersions
 import com.demonwav.mcdev.creator.custom.CreatorContext
 import com.demonwav.mcdev.creator.custom.CreatorCredentials
@@ -28,8 +29,6 @@ import com.demonwav.mcdev.creator.custom.TemplatePropertyDescriptor
 import com.demonwav.mcdev.creator.custom.TemplateValidationReporter
 import com.demonwav.mcdev.util.SemanticVersion
 import com.demonwav.mcdev.util.getOrLogException
-import com.github.kittinunf.fuel.core.Request
-import com.github.kittinunf.fuel.core.extensions.authentication
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.ui.ComboboxSpeedSearch
@@ -39,7 +38,6 @@ import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.util.ui.AsyncProcessIcon
 import java.util.concurrent.ConcurrentHashMap
-import java.util.function.Function
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -85,7 +83,7 @@ class MavenArtifactVersionCreatorProperty(
 
         val url = descriptor.parameters?.get("sourceUrl") as? String
         if (url == null) {
-            reporter.error("Expected string parameter 'sourceUrl'")
+            reporter.error(MCDevBundle("creator.template.validation.expected_source_url"))
             return
         }
 
@@ -94,7 +92,7 @@ class MavenArtifactVersionCreatorProperty(
         val rawVersionFilterCondition = descriptor.parameters?.get("rawVersionFilter")
         if (rawVersionFilterCondition != null) {
             if (rawVersionFilterCondition !is String) {
-                reporter.error("'rawVersionFilter' must be a string")
+                reporter.error(MCDevBundle("creator.template.validation.must_be_string", "rawVersionFilter"))
             } else {
                 rawVersionFilter = { version ->
                     val props = mapOf("version" to version)
@@ -107,7 +105,7 @@ class MavenArtifactVersionCreatorProperty(
         val versionFilterCondition = descriptor.parameters?.get("versionFilter")
         if (versionFilterCondition != null) {
             if (versionFilterCondition !is String) {
-                reporter.error("'versionFilter' must be a string")
+                reporter.error(MCDevBundle("creator.template.validation.must_be_string", "versionFilter"))
             } else {
                 versionFilter = { version ->
                     val props = mapOf("version" to version)
@@ -137,7 +135,11 @@ class MavenArtifactVersionCreatorProperty(
 
     companion object {
 
-        private var versionsCache = ConcurrentHashMap<String, List<SemanticVersion>>()
+        private val versionsCache = ConcurrentHashMap<String, List<SemanticVersion>>()
+
+        internal fun clearCache() {
+            versionsCache.clear()
+        }
 
         private fun downloadVersions(
             context: CreatorContext,
@@ -160,11 +162,8 @@ class MavenArtifactVersionCreatorProperty(
             val scope = context.childScope("MavenArtifactVersionCreatorProperty")
             scope.launch(Dispatchers.Default) {
                 val result = withContext(Dispatchers.IO) {
-                    val requestCustomizer = CreatorCredentials.findMavenRepoCredentials(url)?.let { (user, pass) ->
-                        Function<Request, Request> { request -> request.authentication().basic(user, pass) }
-                    }
-
-                    runCatching { collectMavenVersions(url, requestCustomizer) }
+                    val headers = CreatorCredentials.findMavenRepoAuthHeaders(url)
+                    runCatching { collectMavenVersions(url, headers) }
                 }.map { result ->
                     val versions = result.asSequence()
                         .filter(rawVersionFilter)

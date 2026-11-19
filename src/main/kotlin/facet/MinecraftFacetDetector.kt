@@ -20,6 +20,7 @@
 
 package com.demonwav.mcdev.facet
 
+import com.demonwav.mcdev.asset.MCDevBundle
 import com.demonwav.mcdev.platform.PlatformType
 import com.demonwav.mcdev.platform.architectury.framework.ARCHITECTURY_LIBRARY_KIND
 import com.demonwav.mcdev.platform.architectury.framework.ArchitecturyGradleData
@@ -28,7 +29,6 @@ import com.demonwav.mcdev.platform.forge.framework.FORGE_LIBRARY_KIND
 import com.demonwav.mcdev.platform.minecraft.framework.MINECRAFT_LIBRARY_KIND
 import com.demonwav.mcdev.platform.minecraft.gradle.tooling.archloom.ArchitecturyModel
 import com.demonwav.mcdev.platform.sponge.framework.SPONGE_LIBRARY_KIND
-import com.demonwav.mcdev.util.ifEmpty
 import com.demonwav.mcdev.util.runWriteTaskLater
 import com.intellij.facet.FacetManager
 import com.intellij.facet.impl.ui.libraries.LibrariesValidatorContextImpl
@@ -96,7 +96,7 @@ class MinecraftFacetDetector : ProjectActivity {
         }
 
         suspend fun doCheckUnderProgress(project: Project, detectorService: FacetDetectorScopeProvider) {
-            withBackgroundProgress(project, "Detecting Minecraft Frameworks", cancellable = false) {
+            withBackgroundProgress(project, MCDevBundle("facet.detecting"), cancellable = false) {
                 detectorService.lock.withLock {
                     detectorService.currentJob?.cancelAndJoin()
                     detectorService.currentJob = coroutineContext.job
@@ -111,13 +111,18 @@ class MinecraftFacetDetector : ProjectActivity {
             var needsReimport = false
 
             moduleManager.modules.asList().forEachWithProgress { module ->
-                val facetManager = FacetManager.getInstance(module)
-                val minecraftFacet = facetManager.getFacetByType(MinecraftFacet.ID)
+                // The module may be disposed while this runs in the background, check under the read lock
+                val (minecraftFacet, platforms) = readAction {
+                    if (module.isDisposed) {
+                        return@readAction null
+                    }
+                    FacetManager.getInstance(module).getFacetByType(MinecraftFacet.ID) to autoDetectTypes(module)
+                } ?: return@forEachWithProgress
 
                 if (minecraftFacet == null) {
-                    checkNoFacet(module)
+                    checkNoFacet(module, platforms)
                 } else {
-                    checkExistingFacet(module, minecraftFacet)
+                    checkExistingFacet(minecraftFacet, platforms)
                     if (ProjectReimporter.needsReimport(minecraftFacet)) {
                         needsReimport = true
                     }
@@ -131,14 +136,10 @@ class MinecraftFacetDetector : ProjectActivity {
             }
         }
 
-        private suspend fun checkNoFacet(module: Module) {
-            val platforms = readAction {
-                if (!module.isDisposed) {
-                    autoDetectTypes(module)
-                } else {
-                    emptyList()
-                }
-            }.ifEmpty { return }
+        private fun checkNoFacet(module: Module, platforms: Set<PlatformType>) {
+            if (platforms.isEmpty()) {
+                return
+            }
 
             runWriteTaskLater {
                 // Only add the new facet if there isn't a Minecraft facet already - double check here since this
@@ -163,8 +164,10 @@ class MinecraftFacetDetector : ProjectActivity {
             }
         }
 
-        private fun checkExistingFacet(module: Module, facet: MinecraftFacet) {
-            val platforms = autoDetectTypes(module).ifEmpty { return }
+        private fun checkExistingFacet(facet: MinecraftFacet, platforms: Set<PlatformType>) {
+            if (platforms.isEmpty()) {
+                return
+            }
 
             val types = facet.configuration.state.autoDetectTypes
             types.clear()

@@ -26,14 +26,9 @@ import com.demonwav.mcdev.creator.custom.BuiltinValidations
 import com.demonwav.mcdev.creator.custom.CreatorCredentials
 import com.demonwav.mcdev.creator.custom.TemplateDescriptor
 import com.demonwav.mcdev.creator.modalityState
-import com.demonwav.mcdev.creator.selectProxy
-import com.demonwav.mcdev.update.PluginUtil
 import com.demonwav.mcdev.util.capitalize
+import com.demonwav.mcdev.util.McdevHttp
 import com.demonwav.mcdev.util.refreshSync
-import com.github.kittinunf.fuel.core.FuelManager
-import com.github.kittinunf.fuel.coroutines.awaitByteArrayResult
-import com.github.kittinunf.result.getOrNull
-import com.github.kittinunf.result.onError
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.ControlFlowException
@@ -67,10 +62,11 @@ import javax.swing.ListCellRenderer
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.exists
 import kotlin.io.path.writeBytes
+import kotlinx.coroutines.CancellationException
 
 open class RemoteTemplateProvider : TemplateProvider {
 
-    private var updatedTemplates = mutableSetOf<String>()
+    private val updatedTemplates = mutableSetOf<String>()
 
     override val label: String = MCDevBundle("template.provider.remote.label")
 
@@ -91,6 +87,13 @@ open class RemoteTemplateProvider : TemplateProvider {
         }
     }
 
+    /**
+     * Makes the next [init] update every repo again.
+     */
+    internal open fun clearCache() {
+        updatedTemplates.clear()
+    }
+
     protected suspend fun doUpdateRepo(
         indicator: ProgressIndicator,
         repoName: String,
@@ -98,26 +101,29 @@ open class RemoteTemplateProvider : TemplateProvider {
         authType: RemoteAuthType,
         credentials: String
     ): Boolean {
-        indicator.text2 = "Updating remote repository $repoName"
+        indicator.text2 = MCDevBundle("creator.ui.custom.remote.updating", repoName)
 
         val repoUrl = replaceVariables(originalRepoUrl, TemplateDescriptor.LATEST_FORMAT_VERSION)
 
-        val manager = FuelManager()
-        manager.proxy = selectProxy(repoUrl)
-        var request = manager.get(repoUrl)
-            .header("Accept", "application/octet-stream")
-            .header("User-Agent", PluginUtil.useragent)
-            .timeout(10000)
-
-        if (credentials.isNotBlank()) {
-            request = CreatorCredentials.configureAuthorization(request, originalRepoUrl, authType, credentials)
+        val headers = if (credentials.isNotBlank()) {
+            CreatorCredentials.authorizationHeaders(originalRepoUrl, authType, credentials)
+        } else {
+            emptyMap()
         }
 
-        val result = request.awaitByteArrayResult()
-
-        val data = result.onError {
-            thisLogger().warn("Could not fetch remote templates repository update at $repoUrl", it)
-        }.getOrNull() ?: return false
+        val data = try {
+            McdevHttp.get(repoUrl, headers) {
+                accept("application/octet-stream").connectTimeout(10000)
+            }.connect {
+                readBytes(null)
+            }
+        } catch (e: Exception) {
+            if (e is CancellationException || e is ControlFlowException) {
+                throw e
+            }
+            thisLogger().warn("Could not fetch remote templates repository update at $repoUrl", e)
+            return false
+        }
 
         try {
             val zipPath = RemoteTemplateRepo.getDestinationZip(repoName)
@@ -281,7 +287,7 @@ open class RemoteTemplateProvider : TemplateProvider {
                     .align(AlignX.FILL)
                     .columns(COLUMNS_LARGE)
                     .bindText(basicAuthUsernameProperty)
-                    .addValidationRule("Must not be blank") { field ->
+                    .addValidationRule(MCDevBundle("creator.validation.blank")) { field ->
                         authTypeProperty.get() == RemoteAuthType.BASIC && field.text.isBlank()
                     }
             }.visibleIf(authTypeProperty.equalsTo(RemoteAuthType.BASIC))
@@ -298,7 +304,7 @@ open class RemoteTemplateProvider : TemplateProvider {
                     .align(AlignX.FILL)
                     .columns(COLUMNS_LARGE)
                     .bindText(bearerTokenProperty)
-                    .addValidationRule("Must not be blank") { field ->
+                    .addValidationRule(MCDevBundle("creator.validation.blank")) { field ->
                         authTypeProperty.get() == RemoteAuthType.BEARER && field.password.all { it.isWhitespace() }
                     }
             }.visibleIf(authTypeProperty.equalsTo(RemoteAuthType.BEARER))
@@ -309,7 +315,7 @@ open class RemoteTemplateProvider : TemplateProvider {
                     .bindItem(gitAuthProviderProperty)
                     .validationOnApply { box ->
                         if (authTypeProperty.get() == RemoteAuthType.GIT_HTTP && box.item == null) {
-                            error("A provider must be selected")
+                            error(MCDevBundle("creator.ui.custom.remote.git_http_provider.required"))
                         } else null
                     }
             }.visibleIf(authTypeProperty.equalsTo(RemoteAuthType.GIT_HTTP))
@@ -320,7 +326,7 @@ open class RemoteTemplateProvider : TemplateProvider {
                     .bindItem(gitAuthAccountProperty)
                     .validationOnApply { box ->
                         if (authTypeProperty.get() == RemoteAuthType.GIT_HTTP && box.item == null) {
-                            error("An account must be selected")
+                            error(MCDevBundle("creator.ui.custom.remote.git_http_account.required"))
                         } else null
                     }
             }.visibleIf(authTypeProperty.equalsTo(RemoteAuthType.GIT_HTTP))
@@ -330,7 +336,7 @@ open class RemoteTemplateProvider : TemplateProvider {
                     .align(AlignX.FILL)
                     .columns(COLUMNS_LARGE)
                     .bindText(headerNameProperty)
-                    .addValidationRule("Must not be blank") { field ->
+                    .addValidationRule(MCDevBundle("creator.validation.blank")) { field ->
                         authTypeProperty.get() == RemoteAuthType.HEADER && field.text.all { it.isWhitespace() }
                     }
             }.visibleIf(authTypeProperty.equalsTo(RemoteAuthType.HEADER))

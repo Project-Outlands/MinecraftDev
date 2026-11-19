@@ -20,6 +20,7 @@
 
 package com.demonwav.mcdev.platform.minecraft.at
 
+import com.demonwav.mcdev.asset.MCDevBundle
 import com.demonwav.mcdev.platform.minecraft.at.gen.psi.AtEntry
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
@@ -47,7 +48,7 @@ class AtUsageInspection : LocalInspectionTool() {
                 if (!hasNonAtUsage) {
                     holder.registerProblem(
                         element,
-                        "Access Transformer entry is never used",
+                        MCDevBundle("inspection.at_usage.message"),
                         ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                     )
                 }
