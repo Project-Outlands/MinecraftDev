@@ -23,6 +23,8 @@ package com.demonwav.mcdev.platform.bukkit
 import com.demonwav.mcdev.framework.BASE_DATA_PATH_2
 import com.demonwav.mcdev.framework.EdtInterceptor
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.requireIs
 import org.junit.jupiter.api.Assertions
@@ -64,7 +66,21 @@ class PluginYmlReferenceContributorTest : BaseSpigotTest() {
     fun mainClassReferenceRenameFromPluginYml() {
         fixture.configureByFiles("plugin.yml", "SimplePlugin.java") // The different order matters
 
-        fixture.renameElementAtCaret("RenamedPlugin")
+        // On slow runners the facet may not have registered plugin.yml yet, making
+        // renameElementAtCaret fail to find the reference target. Wait for the reference
+        // to resolve instead of relying on the timing of configureByFiles.
+        var target: PsiElement? = null
+        PlatformTestUtil.waitWithEventsDispatching(
+            "plugin.yml main class reference resolves",
+            {
+                target = fixture.file.findReferenceAt(fixture.caretOffset)?.resolve()
+                target != null
+            },
+            10,
+        )
+        Assertions.assertNotNull(target, "plugin.yml main reference did not resolve")
+
+        fixture.renameElement(target!!, "RenamedPlugin")
         fixture.checkResultByFile("plugin.yml", "afterRename/plugin.yml", false)
         fixture.checkResultByFile("RenamedPlugin.java", "afterRename/RenamedPlugin.java", false)
     }
